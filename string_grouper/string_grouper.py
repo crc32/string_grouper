@@ -9,7 +9,7 @@ from scipy.sparse.csr import csr_matrix
 from scipy.sparse.lil import lil_matrix
 from scipy.sparse.csgraph import connected_components
 from typing import Tuple, NamedTuple, List, Optional, Union
-from sparse_dot_topn_for_blocks import awesome_cossim_topn
+from sparse_dot_top import awesome_cossim_topn
 from topn import awesome_hstack_topn
 from functools import wraps
 
@@ -217,8 +217,17 @@ def validate_is_fit(f):
     return wrapper
 
 
-class StringGrouperNotFitException(Exception):
+class Error(Exception):
+    pass
+
+
+class StringGrouperNotFitException(Error):
     """Raised when one of the public functions is called which requires the StringGrouper to be fit first"""
+    pass
+
+
+class StringLengthException(Error):
+    """Raised when vectoriser is fit on strings that are not of length greater or equal to ngram size"""
     pass
 
 
@@ -885,7 +894,10 @@ class StringGrouper(object):
             strings = pd.concat([self._master, self._duplicates])
         else:
             strings = self._master
-        self._vectorizer.fit(strings)
+         try:    
+            self._vectorizer.fit(strings)
+        except ValueError:
+            raise StringLengthException('None of input string lengths are greater than or equal to n_gram length')
         return self._vectorizer
 
     def _build_matches(self,
@@ -900,7 +912,7 @@ class StringGrouper(object):
 
         optional_kwargs = {
             'return_best_ntop': True,
-            'sort': sort,
+            #'sort': sort,
             'use_threads': self._config.number_of_processes > 1,
             'n_jobs': self._config.number_of_processes}
 
@@ -1147,7 +1159,7 @@ class StringGrouper(object):
     def _is_series_of_strings(series_to_test: pd.Series) -> bool:
         if not isinstance(series_to_test, pd.Series):
             return False
-        elif series_to_test.to_frame().applymap(
+        elif series_to_test.to_frame().map(
                     lambda x: not isinstance(x, str)
                 ).squeeze(axis=1).any():
             return False
