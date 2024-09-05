@@ -23,8 +23,8 @@ setup(
     python_requires='>3.7',
     install_requires=['pandas>=2.1.0'
                       , 'scipy>=1.11.2'
-                      , 'scikit-learn'
-                      , 'numpy>=1.3.0'
+                      , 'scikit-learn>=1.3.0'
+                      , 'numpy>=1.16.6'
                       , 'sparse_dot_topn'
                       , 'topn>=0.0.7'
                       ]
