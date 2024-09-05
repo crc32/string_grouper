@@ -894,6 +894,7 @@ class StringGrouper(object):
             strings = pd.concat([self._master, self._duplicates])
         else:
             strings = self._master
+
         try:
             self._vectorizer.fit(strings)
         except ValueError:
