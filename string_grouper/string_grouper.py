@@ -894,11 +894,10 @@ class StringGrouper(object):
             strings = pd.concat([self._master, self._duplicates])
         else:
             strings = self._master
-
-        try:
-            self._vectorizer.fit(strings)
-        except ValueError:
-            raise StringLengthException('None of input string lengths are greater than or equal to n_gram length')
+        #try:
+        #    self._vectorizer.fit(strings)
+        #except ValueError:
+        #    raise StringLengthException('None of input string lengths are greater than or equal to n_gram length')
         return self._vectorizer
 
     def _build_matches(self,
