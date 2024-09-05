@@ -9,7 +9,7 @@ from scipy.sparse.csr import csr_matrix
 from scipy.sparse.lil import lil_matrix
 from scipy.sparse.csgraph import connected_components
 from typing import Tuple, NamedTuple, List, Optional, Union
-from sparse_dot_topn import awesome_cossim_topn
+from sparse_dot_topn import sp_matmul_topn
 from topn import awesome_hstack_topn
 from functools import wraps
 
@@ -894,10 +894,10 @@ class StringGrouper(object):
             strings = pd.concat([self._master, self._duplicates])
         else:
             strings = self._master
-        #try:
-        #    self._vectorizer.fit(strings)
-        #except ValueError:
-        #    raise StringLengthException('None of input string lengths are greater than or equal to n_gram length')
+        try:
+            self._vectorizer.fit(strings)
+        except ValueError:
+            raise StringLengthException('None of input string lengths are greater than or equal to n_gram length')
         return self._vectorizer
 
     def _build_matches(self,
@@ -910,18 +910,16 @@ class StringGrouper(object):
         if nnz_rows is None:
             nnz_rows = np.full(left_matrix.shape[0], 0, dtype=np.int32)
 
-        optional_kwargs = {
-            'return_best_ntop': True,
-            #'sort': sort,
-            'use_threads': self._config.number_of_processes > 1,
-            'n_jobs': self._config.number_of_processes}
+        matches = sp_matmul_topn(
+            A=left_matrix,
+            B=right_matrix,
+            top_n=self._max_n_matches,
+            threshold=self._config.min_similarity,
+            sort=True,
+            n_threads=self._config.number_of_processes,
+        )
 
-        return awesome_cossim_topn(
-            left_matrix, right_matrix,
-            self._max_n_matches,
-            nnz_rows,
-            self._config.min_similarity,
-            **optional_kwargs)
+        return matches, np.diff(matches.indptr).max()
 
     def _get_matches_list(self,
                           matches: csr_matrix
